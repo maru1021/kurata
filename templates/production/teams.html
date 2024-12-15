@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>班一覧</h1>
+    <button class="btn btn-primary mb-3" id="team-register-modal-show-btn">班を追加</button>
+
+    <!-- 班のデータテーブル -->
+    <table id="teamsTable" class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>班ID</th>
+                <th>班名</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for team in teams %}
+            <tr>
+                <td>{{ team.id }}</td>
+                <td>{{ team.name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- モーダル -->
+<div class="modal fade" id="addTeamModal" tabindex="-1" aria-labelledby="addTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTeamModalLabel">班を追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Bootstrapのバリデーション用クラスを追加 -->
+                <form id="addTeamForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="teamName" class="form-label">班名</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="teamName" 
+                            name="name" 
+                            required
+                        >
+                        <!-- エラーメッセージ -->
+                        <div class="invalid-feedback" id="teamNameFeedback">
+                            班名を入力してください。
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="team-register-btn">登録</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        // DataTables の初期化
+        initializeDataTable('#teamsTable');
+
+        // モーダルを表示する
+        $('#team-register-modal-show-btn').on('click', function () {
+            $('#addTeamModal').modal('show');
+        });
+
+        // フォームのバリデーション
+        (() => {
+            const form = document.querySelector('#addTeamForm');
+            const teamNameInput = document.querySelector('#teamName');
+            const teamNameFeedback = document.querySelector('#teamNameFeedback');
+
+            form.addEventListener('submit', (event) => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    event.preventDefault();
+
+                    const formData = $(form).serialize();
+
+                    teamNameFeedback.textContent = "班名を入力してください。";
+                    teamNameInput.classList.remove('is-invalid');
+
+                    $.ajax({
+                        url: "{% url 'production:team_create' %}",
+                        type: 'POST',
+                        data: formData,
+                        headers: {
+                            "X-CSRFToken": "{{ csrf_token }}",
+                        },
+                        success: function (data) {
+                            if (data.success) {
+                                console.log('test')
+                                toastr.success("登録に成功しました");
+                            } else if (data.message === "その班はすでに登録されています。") {
+                                teamNameFeedback.textContent = data.message;
+                                teamNameInput.classList.add('is-invalid');
+                            } else {
+                                toastr.error("登録に失敗しました");
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error occurred while registering the team:", error);
+                            toastr.error("班の登録に失敗しました。");
+                        }
+                    });
+                }
+
+                form.classList.add('was-validated');
+            });
+
+            // 入力フィールドの変更時にエラーメッセージをリセット
+            $('#teamName').on('input', function () {
+                teamNameFeedback.textContent = "班名を入力してください。";
+                $(this).removeClass('is-invalid');
+            });
+        })();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+.dataTables_length select {
+  padding: 5px; /* セレクトボックスの内側に余白を追加 */
+  margin-right: 10px; /* 右に少し余白を追加 */
+  background: #ffffff; /* 背景を白に */
+  border: 1px solid #cccccc; /* セレクトボックスの枠線 */
+  border-radius: 4px; /* 角丸を追加 */
+}
