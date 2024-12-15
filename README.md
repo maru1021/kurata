@@ -28,4 +28,5 @@ django-admin startproject myproject
 
 python manage.py runserver
 と打った後に
-http://127.0.0.1:8000/にアクセスし、ページが表示されればOK
+http://127.0.0.1:8000/
+にアクセスし、ページが表示されればOK
