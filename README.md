@@ -30,3 +30,13 @@ python manage.py runserver
 と打った後に
 http://127.0.0.1:8000/
 にアクセスし、ページが表示されればOK
+
+アプリケーションの作成
+python manage.py startapp アプリケーション名
+
+モデルの作成(データベースのテーブル)
+ python manage.py makemigrations
+ python manage.py migrate
+
+マスターユーザーの作成
+ python manage.py createsuperuser

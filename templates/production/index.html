@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生産管理</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>班の生産台数</h1>
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addRecordModal">生産記録を追加</button>
+        <table id="productionTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>班</th>
+                    <th>シフト</th>
+                    <th>生産台数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.team.name }}</td>
+                    <td>{{ record.get_shift_display }}</td>
+                    <td>{{ record.units_produced }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- モーダル -->
+    <div class="modal fade" id="addRecordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">生産記録を追加</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRecordForm">
+                        <div class="mb-3">
+                            <label for="team" class="form-label">班</label>
+                            <select id="team" class="form-select">
+                                <!-- Django側で班の選択肢を提供 -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="shift" class="form-label">シフト</label>
+                            <select id="shift" class="form-select">
+                                <option value="Day">昼勤</option>
+                                <option value="Night">夜勤</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="units_produced" class="form-label">生産台数</label>
+                            <input type="number" id="units_produced" class="form-control" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <button type="button" class="btn btn-primary">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 必要なスクリプト -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#productionTable').DataTable();
+        });
+    </script>
+</body>
+</html>
