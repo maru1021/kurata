@@ -62,7 +62,14 @@
 <script>
     $(document).ready(function () {
         // DataTables の初期化
-        initializeDataTable('#teamsTable');
+        const dataTable = initializeDataTable(
+            '#teamsTable',
+            "{% url 'production:team_list' %}",
+            [
+                { "data": "id", "title": "班ID" },
+                { "data": "name", "title": "班名" }
+            ]
+        );
 
         // モーダルを表示する
         $('#team-register-modal-show-btn').on('click', function () {
@@ -98,6 +105,8 @@
                             if (data.success) {
                                 console.log('test')
                                 toastr.success("登録に成功しました");
+
+                                dataTable.ajax.reload(null, false);
                             } else if (data.message === "その班はすでに登録されています。") {
                                 teamNameFeedback.textContent = data.message;
                                 teamNameInput.classList.add('is-invalid');

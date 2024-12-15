@@ -8,5 +8,6 @@ app_name = 'production'
 urlpatterns = [
     path('', views.index, name='index'),
     path("teams/", views.team_index, name="team_index"),
+    path("teams_list", views.team_list, name="team_list"),
     path("teams/create/", views.team_create, name="team_create"),
 ]

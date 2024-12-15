@@ -19,8 +19,9 @@ def team_index(request):
         teams = Team.objects.all()
         return render(request, "production/teams.html", {"teams": teams})
 
-from django.http import JsonResponse
-from .models import Team
+def team_list(request):
+    teams = Team.objects.all().values('id', 'name')
+    return JsonResponse(list(teams), safe=False)
 
 def team_create(request):
     if request.method == "POST":
