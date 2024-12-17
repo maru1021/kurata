@@ -5,7 +5,7 @@
     <h1>班一覧</h1>
     <button class="btn btn-primary mb-3" id="team-register-modal-show-btn">班を追加</button>
 
-    <!-- 班のデータテーブル -->
+    <!-- データテーブル -->
     <table id="teamsTable" class="table table-bordered table-hover">
         <thead>
             <tr>
@@ -13,55 +13,28 @@
                 <th>班名</th>
             </tr>
         </thead>
-        <tbody>
-            {% for team in teams %}
-            <tr>
-                <td>{{ team.id }}</td>
-                <td>{{ team.name }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+        <tbody></tbody>
     </table>
 </div>
 
-<!-- モーダル -->
-<div class="modal fade" id="addTeamModal" tabindex="-1" aria-labelledby="addTeamModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addTeamModalLabel">班を追加</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Bootstrapのバリデーション用クラスを追加 -->
-                <form id="addTeamForm" class="needs-validation" novalidate>
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="teamName" class="form-label">班名</label>
-                        <input 
-                            type="text" 
-                            class="form-control" 
-                            id="teamName" 
-                            name="name" 
-                            required
-                        >
-                        <!-- エラーメッセージ -->
-                        <div class="invalid-feedback" id="teamNameFeedback">
-                            班名を入力してください。
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="team-register-btn">登録</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<!-- コンテキストメニュー -->
+<div id="contextMenu" class="dropdown-menu">
+    <a class="dropdown-item" href="#" id="edit-team">
+        <i class="fas fa-edit me-2"></i> 編集
+    </a>
+    <a class="dropdown-item text-danger" href="#" id="delete-team">
+        <i class="fas fa-trash-alt me-2"></i> 削除
+    </a>
 </div>
 {% endblock %}
 
 {% block script %}
 <script>
     $(document).ready(function () {
-        // DataTables の初期化
+        let selectedRowData = null;
+        let isEditMode = false;
+
+        // DataTable 初期化
         const dataTable = initializeDataTable(
             '#teamsTable',
             "{% url 'production:team_list' %}",
@@ -71,65 +44,115 @@
             ]
         );
 
-        // モーダルを表示する
-        $('#team-register-modal-show-btn').on('click', function () {
-            $('#addTeamModal').modal('show');
+        // コンテキストメニューの表示
+        $('#teamsTable tbody').on('contextmenu', 'tr', function (e) {
+            e.preventDefault();
+            const row = dataTable.row(this);
+            selectedRowData = row.data();
+            $('#contextMenu').css({ display: 'block', top: e.pageY + 'px', left: e.pageX + 'px' });
         });
 
-        // フォームのバリデーション
-        (() => {
-            const form = document.querySelector('#addTeamForm');
-            const teamNameInput = document.querySelector('#teamName');
-            const teamNameFeedback = document.querySelector('#teamNameFeedback');
+        // クリックでコンテキストメニュー非表示
+        $(document).on('click', () => $('#contextMenu').hide());
 
-            form.addEventListener('submit', (event) => {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else {
-                    event.preventDefault();
+        // モーダル表示（追加モード）
+        $('#team-register-modal-show-btn').on('click', function () {
+            isEditMode = false;
+            setupModal('班を追加', '登録', '');
+            $('#commonModal').modal('show');
+        });
 
-                    const formData = $(form).serialize();
+        // モーダル表示（編集モード）
+        $('#edit-team').on('click', function () {
+            if (selectedRowData) {
+                isEditMode = true;
+                setupModal('班を編集', '編集', selectedRowData.name);
+                $('#commonModal').modal('show');
+            }
+        });
 
-                    teamNameFeedback.textContent = "班名を入力してください。";
-                    teamNameInput.classList.remove('is-invalid');
-
-                    $.ajax({
-                        url: "{% url 'production:team_create' %}",
-                        type: 'POST',
-                        data: formData,
-                        headers: {
-                            "X-CSRFToken": "{{ csrf_token }}",
-                        },
-                        success: function (data) {
-                            if (data.success) {
-                                console.log('test')
-                                toastr.success("登録に成功しました");
-
-                                dataTable.ajax.reload(null, false);
-                            } else if (data.message === "その班はすでに登録されています。") {
-                                teamNameFeedback.textContent = data.message;
-                                teamNameInput.classList.add('is-invalid');
-                            } else {
-                                toastr.error("登録に失敗しました");
-                            }
-                        },
-                        error: function (xhr, status, error) {
-                            console.error("Error occurred while registering the team:", error);
-                            toastr.error("班の登録に失敗しました。");
+        // 削除処理
+        $('#delete-team').on('click', function () {
+            if (confirm("本当に削除しますか？")) {
+                $.ajax({
+                    url: `/production/teams/${selectedRowData.id}/`,
+                    type: 'DELETE',
+                    headers: { "X-CSRFToken": "{{ csrf_token }}" },
+                    success: function (data) {
+                        if (data.success) {
+                            toastr.success("班が削除されました");
+                            dataTable.ajax.reload(null, false);
+                        } else {
+                            toastr.error("削除に失敗しました");
                         }
-                    });
+                    },
+                    error: function () {
+                        toastr.error("エラーが発生しました。");
+                    }
+                });
+            }
+        });
+
+        // モーダルの内容を設定
+        function setupModal(title, buttonText, nameValue) {
+            $('#commonModalTitle').text(title);
+            $('#commonModalSubmitBtn').text(buttonText);
+            $('#commonModalBody').html(`
+                <div class="mb-3">
+                    <label for="teamName" class="form-label">班名</label>
+                    <input type="text" class="form-control" id="teamName" name="name" value="${nameValue}" required>
+                    <div class="invalid-feedback" id="teamNameFeedback"></div>
+                </div>
+            `);
+        }
+
+        // フォーム送信処理
+        $('#commonModalForm').on('submit', function (e) {
+            // ページ遷移しないためにデフォルトのsubmitの挙動を取り消す
+            e.preventDefault();
+
+            const teamNameInput = $('#teamName');
+            const teamNameFeedback = $('#teamNameFeedback');
+
+            // 空白時のバリデーション
+            if (!teamNameInput.val().trim()) {
+                teamNameInput.addClass('is-invalid');
+                teamNameFeedback.text('班名を入力してください。');
+                return;
+            }
+
+            // 編集かどうかで送信先、メソッドの切り替え
+            const url = isEditMode
+                ? `/production/teams/${selectedRowData.id}/`
+                : "{% url 'production:team_create' %}";
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            // 送信リクエスト
+            $.ajax({
+                url: url,
+                type: method,
+                data: { name: teamNameInput.val(), csrfmiddlewaretoken: "{{ csrf_token }}" },
+                success: function (data) {
+                    if (data.success) {
+                        toastr.success(data.message);
+                        $('#commonModal').modal('hide');
+                        dataTable.ajax.reload(null, false);
+                    } else {
+                        $(data.field).text(data.message);
+                        teamNameInput.addClass('is-invalid');
+                    }
+                },
+                error: function () {
+                    toastr.error("エラーが発生しました。");
                 }
-
-                form.classList.add('was-validated');
             });
+        });
 
-            // 入力フィールドの変更時にエラーメッセージをリセット
-            $('#teamName').on('input', function () {
-                teamNameFeedback.textContent = "班名を入力してください。";
-                $(this).removeClass('is-invalid');
-            });
-        })();
+        // 入力時にエラーをクリア
+        $(document).on('input', '#teamName', function () {
+            $(this).removeClass('is-invalid');
+            $('#teamNameFeedback').text('班名を入力してください。');
+        });
     });
 </script>
 {% endblock %}

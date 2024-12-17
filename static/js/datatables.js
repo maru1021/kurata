@@ -10,7 +10,7 @@ function initializeDataTable(selector, url, columns) {
       "ajax": {
           "url": url,
           "type": "GET",
-          "dataSrc": "" // サーバーから返されるデータの形式に合わせて変更
+          "dataSrc": ""
       },
       "paging": true,
       "searching": true,
