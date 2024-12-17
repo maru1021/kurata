@@ -31,7 +31,9 @@
 {% block script %}
 <script>
     $(document).ready(function () {
+        // 編集、削除時に使用する行のデータ
         let selectedRowData = null;
+        // 編集かどうかの判別
         let isEditMode = false;
 
         // DataTable 初期化

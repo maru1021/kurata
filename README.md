@@ -1,3 +1,4 @@
+ローカルでの動作
 pythonのインストール
 https://www.python.org/downloads/
 
@@ -40,3 +41,17 @@ python manage.py startapp アプリケーション名
 
 マスターユーザーの作成
  python manage.py createsuperuser
+
+
+
+codespaceでの動作方法
+docker compose up --build
+
+ターミナルを一つ追加後
+docker compose exec web python manage.py migrate
+
+見本をダウンロードする方法
+gitをインストール
+https://git-scm.com/
+
+git clone https://github.com/maru1021/kurata
