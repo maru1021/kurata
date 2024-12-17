@@ -138,7 +138,7 @@
                         $('#commonModal').modal('hide');
                         dataTable.ajax.reload(null, false);
                     } else {
-                        $(data.field).text(data.message);
+                        $(`#${data.field}`).text(data.message);
                         teamNameInput.addClass('is-invalid');
                     }
                 },

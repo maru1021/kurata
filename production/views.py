@@ -13,9 +13,8 @@ def index(request):
 
 # Team一覧ページ
 def team_index(request):
-    if request.method == "GET":
-        teams = Team.objects.all()
-        return render(request, "production/teams.html", {"teams": teams})
+    teams = Team.objects.all()
+    return render(request, "production/teams.html", {"teams": teams})
 
 
 # Team管理クラス
@@ -40,6 +39,7 @@ class TeamDetailView(View):
         if Team.objects.filter(name=team_name).exists():
             return JsonResponse({
                 "success": False,
+                "field": "teamNameFeedback",
                 "message": "その班はすでに登録されています。"
             })
 
