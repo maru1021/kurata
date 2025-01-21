@@ -12,3 +12,4 @@ services:
       - .:/app
     environment:
       - DEBUG=True
+      - PYTHONUNBUFFERED=1  # バッファリングを無効化(print()の出力をリアルタイムに表示するために必要)

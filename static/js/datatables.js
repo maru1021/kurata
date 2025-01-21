@@ -1,32 +1,31 @@
-/**
- * 汎用的な DataTables 初期化関数
- * @param {string} selector - DataTables を初期化するテーブルのセレクタ
- * @param {string} url - Ajax でデータを取得するエンドポイントの URL
- * @param {Array} columns - DataTables に表示する列の設定
- * @returns {DataTable} - 初期化された DataTables オブジェクト
- */
 function initializeDataTable(selector, url, columns) {
-  return $(selector).DataTable({
-      "ajax": {
-          "url": url,
-          "type": "GET",
-          "dataSrc": ""
-      },
-      "paging": true,
-      "searching": true,
-      "ordering": true,
-      "info": true,
-      "language": {
-          "lengthMenu": "_MENU_ 件表示",
-          "zeroRecords": "データが見つかりません。",
-          "info": "全 _TOTAL_ 件中 _START_ 件から _END_ 件を表示",
-          "infoEmpty": "データがありません。",
-          "search": "検索:",
-          "paginate": {
-              "next": "次",
-              "previous": "前"
-          }
-      },
-      "columns": columns
-  });
+    return $(selector).DataTable({
+        "ajax": {
+            "url": url,
+            "type": "GET",
+            "dataSrc": "",
+        },
+        "paging": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "language": {
+            "lengthMenu": "_MENU_ 件表示",
+            "zeroRecords": "データが見つかりません。",
+            "info": "全 _TOTAL_ 件中 _START_ 件から _END_ 件を表示",
+            "infoEmpty": "データがありません。",
+            "infoFiltered": "（全 _MAX_ 件から絞り込み）",
+            "search": "検索:",
+            "paginate": {
+                "next": "次",
+                "previous": "前"
+            },
+            "loadingRecords": "読み込み中...",
+            "processing": "処理中...",
+            "emptyTable": "テーブルにデータがありません。",
+            "thousands": ","
+        },
+        "columns": columns,
+        "rowId": "id",
+    });
 }

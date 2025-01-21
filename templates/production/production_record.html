@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>生産情報一覧</h1>
+    <button class="btn btn-primary mb-3" id="productionRecord-register-modal-show-btn">生産情報追加</button>
+
+    <!-- データテーブル -->
+    <table id="productionRecordTable" class="table table-bordered table-hover">
+    </table>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        // 編集かどうかの判別
+        let isEditMode = false;
+
+        // DataTable 初期化
+        const dataTable = initializeDataTable(
+            '#productionRecordTable',
+            "{% url 'production:production_record_list' %}",
+            [
+                { "data": "date", "title": "生産日" },
+                { "data": "team__name", "title": "班名" },
+                { "data": "shift", "title": "シフト" },
+                { "data": "units_produced", "title": "生産台数" },
+            ]
+        );
+
+        // コンテキストメニューの設定
+        const contextMenuHandler = initializeContextMenu('#productionRecordTable');
+
+        // モーダル表示（追加モード）
+        $('#productionRecord-register-modal-show-btn').on('click', function () {
+            isEditMode = false;
+            setupModal('生産情報編集追加', '登録', '');
+            $('#commonModal').modal('show');
+        });
+
+        // モーダル表示（編集モード）
+        $('#data-edit').on('click', function () {
+            const selectedRowData = contextMenuHandler.getSelectedRowData();
+            if (selectedRowData) {
+                isEditMode = true;
+                showContextEdit(setupModal,selectedRowData, '生産情報編集');
+            }
+        });
+
+        // 削除確認モーダル表示
+        $('#data-delete').on('click', function () {
+            const selectedRowData = contextMenuHandler.getSelectedRowData();
+            if (selectedRowData) {
+                showContextDelete(selectedRowData.name)
+            }
+        });
+
+        // 削除処理
+        $('#confirmDeleteBtn').on('click', function () {
+            const selectedRowData = contextMenuHandler.getSelectedRowData();
+            handleDelete(`/production/production_record/${selectedRowData.id}/`,dataTable)
+        })
+
+        // モーダルの内容を設定
+        function setupModal(title, buttonText, selectedRowData) {
+            $('#commonModalTitle').text(title);
+            $('#commonModalSubmitBtn').text(buttonText);
+
+            $('#commonModalBody').html(`
+                <input type="hidden" id="rowDataId" name="rowDataId" value="${selectedRowData ? selectedRowData.id : ''}">
+                <div class="mb-3">
+                    <label for="datePicker" class="form-label">生産日</label>
+                    <input type="text" class="form-control validate-input" id="datePicker" name="date" value="${selectedRowData ? selectedRowData.date: ''}">
+                    <div class="invalid-feedback" for="datePicker"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="teamSelect" class="form-label">班</label>
+                    <select class="form-select select2 validate-input" id="teamSelect" name="team" value="${selectedRowData ? selectedRowData.team__name: ''}">
+                        <option value="" disabled selected>班を選択してください</option>
+                    </select>
+                    <div class="invalid-feedback" for="teamSelect"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="shiftSelect" class="form-label">シフト</label>
+                    <select class="form-control validate-input" id="shiftSelect" name="shift" value="${selectedRowData ? selectedRowData.shift: ''}">
+                        <option value="昼勤">昼勤</option>
+                        <option value="夜勤">夜勤</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="unitsProduced" class="form-label">生産台数</label>
+                    <input type="number" class="form-control validate-input" id="unitsProduced" name="units_produced" min="0" value="${selectedRowData ? selectedRowData.units_produced: ''}">
+                    <div class="invalid-feedback" for="unitsProduced"></div>
+                </div>
+            `);
+
+            initializeDatepicker("#datePicker");
+
+            // 班データを取得し、選択肢を設定
+            $.ajax({
+                url: "{% url 'production:team_list' %}",
+                type: "GET",
+                success: function (data) {
+                    const teamSelect = $('#teamSelect');
+                    teamSelect.empty();
+                    teamSelect.append('<option value="" disabled selected>班を選択してください</option>');
+                    data.forEach(team => {
+                        teamSelect.append(`<option value="${team.id}">${team.name}</option>`);
+                    });
+
+                    // select2 の初期化
+                    teamSelect.select2({
+                        width: '100%',
+                        dropdownParent: $('#commonModal'),
+                    });
+
+                    // 非同期通信で外側では取得できないため、ここで選択状態を設定
+                    if (selectedRowData) {
+                        $('#teamSelect').val(selectedRowData.team__id).trigger('change');
+                    }
+                },
+                error: function () {
+                    toastr.error('班データの取得に失敗しました。');
+                }
+            });
+
+            if(selectedRowData){
+                $('#datePicker').val(selectedRowData.date);
+            }
+        }
+
+        // フォーム送信処理
+        $('#commonModalForm').on('submit', function (e) {
+            // ページ遷移しないためにデフォルトのsubmitの挙動を取り消す
+            e.preventDefault();
+
+            const id = $('#rowDataId').val();
+
+            // バリデーションルール
+            const validationRules = [
+                { field: '#datePicker', feedbackSelector: '.invalid-feedback[for="datePicker"]', errorMessage: '-年-月-日の形式で正しい日付を入力してください。', type: 'date' },
+                { field: '#teamSelect', feedbackSelector: '.invalid-feedback[for="teamSelect"]', errorMessage: '班を選択してください。' },
+                { field: '#unitsProduced', feedbackSelector: '.invalid-feedback[for="unitsProduced"]', errorMessage: '生産台数を入力してください。' }
+            ];
+
+            const isValid = validateFields(validationRules);
+
+            if (!isValid) {
+                return;
+            }
+
+            // 編集かどうかで送信先、メソッドの切り替え
+            const url = isEditMode
+                ? `/production/production_record/${id}/`
+                : "{% url 'production:production_record_create' %}";
+            const method = isEditMode ? 'PUT' : 'POST';
+            const sendData = {
+                date: $('#datePicker').val(),
+                team_id: $('#teamSelect').val(),
+                shift: $('#shiftSelect').val(),
+                units_produced: $('#unitsProduced').val(),
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            };
+
+            // 送信リクエスト
+            handleEdit(url, method, sendData, dataTable);
+        });
+    });
+</script>
+{% endblock %}

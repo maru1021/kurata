@@ -6,14 +6,14 @@ from django.utils.decorators import method_decorator
 from urllib.parse import parse_qs
 from ..models import Team
 
-# Team管理クラス
+# 班管理クラス
 @method_decorator(csrf_exempt, name='dispatch')  # PUT/DELETE時に必要
 class TeamDetailView(View):
     # データの取得
     def get(self, request, pk=None):
         # pkがない場合、班一覧を取得
         if pk is None:
-            teams = Team.objects.all().values('id', 'name')
+            teams = Team.objects.all().values()
             return JsonResponse(list(teams), safe=False)
 
         # pkがある場合、特定の班情報を取得
@@ -31,7 +31,8 @@ class TeamDetailView(View):
         if Team.objects.filter(name=team_name).exists():
             return JsonResponse({
                 "success": False,
-                "field": "teamNameFeedback",
+                "error_field": "teamName",
+                "error_message_field": "teamNameFeedback",
                 "message": "その班はすでに登録されています。"
             })
 
@@ -57,7 +58,8 @@ class TeamDetailView(View):
             if Team.objects.filter(name=team_name).exclude(pk=pk).exists():
                 return JsonResponse({
                     "success": False,
-                    "field": "teamNameFeedback",
+                    "error_field": "teamName",
+                    "error_message_field": "teamNameFeedback",
                     "message": "その班はすでに登録されています。"
                 })
 

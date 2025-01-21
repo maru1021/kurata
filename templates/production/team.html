@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>班一覧</h1>
+    <button class="btn btn-primary mb-3" id="team-register-modal-show-btn">班を追加</button>
+
+    <!-- データテーブル -->
+    <table id="teamTable" class="table table-bordered table-hover">
+    </table>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        // 編集かどうかの判別
+        let isEditMode = false;
+
+        // DataTable 初期化
+        const dataTable = initializeDataTable(
+            '#teamTable',
+            "{% url 'production:team_list' %}",
+            [
+                { "data": "name", "title": "班名" }, // 班名だけを表示
+            ],
+        );
+
+        const rows = $('#teamTable').DataTable().rows().data();
+
+        // コンテキストメニューの設定
+        const contextMenuHandler = initializeContextMenu('#teamTable');
+
+        // モーダル表示（追加モード）
+        $('#team-register-modal-show-btn').on('click', function () {
+            isEditMode = false;
+            setupModal('班を追加', '登録', '');
+            $('#commonModal').modal('show');
+        });
+
+        // モーダル表示（編集モード）
+        $('#data-edit').on('click', function () {
+            const selectedRowData = contextMenuHandler.getSelectedRowData();
+            if (selectedRowData) {
+                isEditMode = true;
+                showContextEdit(setupModal,selectedRowData, '班編集');
+            }
+        });
+
+        // 削除確認モーダル表示
+        $('#data-delete').on('click', function () {
+            const selectedRowData = contextMenuHandler.getSelectedRowData();
+            if (selectedRowData) {
+                showContextDelete(selectedRowData.name)
+            }
+        });
+
+        // 削除処理
+        $('#confirmDeleteBtn').on('click', function () {
+            const selectedRowData = contextMenuHandler.getSelectedRowData();
+            handleDelete(`/production/team/${selectedRowData.id}/`,dataTable)
+        })
+
+        // モーダルの内容を設定
+        function setupModal(title, buttonText, selectedRowData) {
+            $('#commonModalTitle').text(title);
+            $('#commonModalSubmitBtn').text(buttonText);
+            $('#commonModalBody').html(`
+                <input type="hidden" id="rowDataId" name="rowDataId" value="${selectedRowData ? selectedRowData.id : ''}">
+                <div class="mb-3">
+                    <label for="teamName" class="form-label">班名</label>
+                    <input type="text" class="form-control" id="teamName" name="name" value="${selectedRowData ? selectedRowData.name: ''}" required>
+                    <div class="invalid-feedback" for="teamName"></div>
+                </div>
+            `);
+        }
+
+        // フォーム送信処理
+        $('#commonModalForm').on('submit', function (e) {
+            // ページ遷移しないためにデフォルトのsubmitの挙動を取り消す
+            e.preventDefault();
+
+            const id = $('#rowDataId').val();
+
+            const validationRules = [
+                { field: '#teamName', feedbackSelector: '.invalid-feedback[for="teamName"]', errorMessage: '班名を入力してください。' },
+            ];
+
+            const isValid = validateFields(validationRules);
+
+            if (!isValid) {
+                return;
+            }
+
+            // 編集かどうかで送信先、メソッドの切り替え
+            const url = isEditMode
+                ? `/production/team/${id}/`
+                : "{% url 'production:team_create' %}";
+            const method = isEditMode ? 'PUT' : 'POST';
+            const sendData = { name: $('#teamName').val(), csrfmiddlewaretoken: "{{ csrf_token }}" }
+
+            // 送信リクエスト
+            handleEdit(url, method, sendData, dataTable);
+        });
+    });
+</script>
+{% endblock %}

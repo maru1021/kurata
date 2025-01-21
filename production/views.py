@@ -6,7 +6,12 @@ def index(request):
     records = ProductionRecord.objects.all()
     return render(request, 'production/index.html', {'records': records})
 
-# Team一覧ページ
+# 班管理ページ
 def team_index(request):
     teams = Team.objects.all()
-    return render(request, "production/teams.html", {"teams": teams})
+    return render(request, "production/team.html", {"teams": teams})
+
+# 生産数管理ページ
+def production_record_index(request):
+    production_records = ProductionRecord.objects.all()
+    return render(request, "production/production_record.html", {"production_records": production_records})

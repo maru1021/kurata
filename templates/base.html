@@ -15,7 +15,11 @@
     <!-- Toastr CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'CSS/shared.css' %}">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     {% block extra_css %}
     {% endblock %}
 </head>
@@ -31,10 +35,10 @@
                         <a class="nav-link" href="/">ホーム</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/production">生産記録</a>
+                        <a class="nav-link" href="{% url 'production:production_record_index' %}">生産数管理</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'production:team_index' %}">班管理ページ</a>
+                        <a class="nav-link" href="{% url 'production:team_index' %}">班管理</a>
                     </li>
                 </ul>
             </div>
@@ -46,6 +50,7 @@
         </div>
     </div>
 
+    <!-- 通常モーダル -->
     <div class="modal fade" id="commonModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -62,6 +67,35 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- 削除確認モーダル -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">削除確認</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>本当に <strong id="deleteName"></strong> を削除しますか？ この操作は元に戻せません。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">削除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- コンテキストメニュー -->
+    <div id="contextMenu" class="dropdown-menu">
+        <a class="dropdown-item" href="#" id="data-edit">
+            <i class="fas fa-edit me-2"></i> 編集
+        </a>
+        <a class="dropdown-item text-danger" href="#" id="data-delete">
+            <i class="fas fa-trash-alt me-2"></i> 削除
+        </a>
     </div>
 
     <!-- 共通スクリプトの読み込み -->
