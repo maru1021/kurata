@@ -17,7 +17,6 @@ export function validateFields(rules) {
       // 日付のバリデーション
       const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
       if(!dateRegex.test(value)){
-        console.log(value);
         $(field).addClass('is-invalid');
         $(feedbackSelector).text(errorMessage);
         isValid = false;

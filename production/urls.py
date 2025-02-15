@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .API.team import TeamDetailView
 from .API.production_record import ProductionRecordDetailView
+from .API.production_record_graph import ProductionRecordGraphView
 
 app_name = 'production'
 
@@ -17,5 +18,6 @@ urlpatterns = [
     path('production_record/list/', ProductionRecordDetailView.as_view(), name='production_record_list'),
     path('production_record/create/', ProductionRecordDetailView.as_view(), name='production_record_create'),
     path('production_record/<int:pk>/', ProductionRecordDetailView.as_view(), name='production_record_detail'),
+    path('production_record_graph/', ProductionRecordGraphView.as_view(), name='production_record_graph'),
 ]
 

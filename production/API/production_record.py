@@ -47,7 +47,6 @@ class ProductionRecordDetailView(View):
                 "message": "生産記録を登録しました。"
             })
         except Exception as e:
-            print('error')
             return JsonResponse({
                 "success": False,
                 "message": f"エラーが発生しました: {str(e)}"

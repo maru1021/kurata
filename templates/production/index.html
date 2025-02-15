@@ -1,15 +1,1 @@
 {% extends "base.html" %}
-
-{% block title %}班の管理{% endblock %}
-
-{% block content %}
-<h1>班を登録する</h1>
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label for="name" class="form-label">班名</label>
-        <input type="text" class="form-control" id="name" name="name" placeholder="班名を入力してください">
-    </div>
-    <button type="submit" class="btn btn-primary">登録</button>
-</form>
-{% endblock %}

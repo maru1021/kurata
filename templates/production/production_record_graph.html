@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>生産情報グラフ</h1>
+    <button class="btn btn-primary mb-3" id="graph-set">グラフ情報設定</button>
+</div>
+<canvas id="productionChart" width="400" height="200"></canvas>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function () {
+        let chart;
+        // 初期データ取得とグラフ描画
+        $.ajax({
+            url: "{% url 'production:production_record_graph' %}",
+            type: "POST",
+            data: {
+                date: new Date().toISOString().split("T")[0],
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+            success: function (data) {
+                renderChart(data.data);
+            },
+            error: function () {
+                toastr.error('初期データの取得に失敗しました。');
+            }
+        });
+
+        function renderChart(data) {
+            // 既存のグラフがある場合は破棄
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Chart.js の設定
+            const ctx = document.getElementById('productionChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: Object.entries(data.data).map(([team, values], index) => ({
+                        label: team,
+                        data: values,
+                        borderColor: `hsl(${index * 60}, 70%, 50%)`, // 線の色
+                    })),
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '生産情報グラフ（直近1ヶ月）',
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '日付',
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '生産台数',
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        // モーダル表示（追加モード）
+        $('#graph-set').on('click', function () {
+            setupModal('日付', '設定');
+            $('#commonModal').modal('show');
+        })
+
+        // モーダルの内容を設定
+        function setupModal(title, buttonText) {
+            $('#commonModalTitle').text(title);
+            $('#commonModalSubmitBtn').text(buttonText);
+
+            $('#commonModalBody').html(`
+                <div class="mb-3">
+                    <label for="teamSelect" class="form-label">班</label>
+                    <select class="form-select select2 validate-input" id="teamSelect" name="team">
+                        <option value="" disabled selected>班を選択してください</option>
+                    </select>
+                    <div class="invalid-feedback" for="teamSelect"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="shiftSelect" class="form-label">シフト</label>
+                    <select class="form-control validate-input" id="shiftSelect" name="shift">
+                        <option value="昼勤">昼勤</option>
+                        <option value="夜勤">夜勤</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="rangeSelect" class="form-label">範囲</label>
+                    <select class="form-control validate-input" id="rangeSelect" name="rangeSelect">
+                        <option value="month">月</option>
+                        <option value="year">年</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="datePicker" class="form-label">終了日</label>
+                    <input type="text" class="form-control validate-input" id="datePicker" name="date">
+                    <div class="invalid-feedback" for="datePicker"></div>
+                </div>
+            `);
+
+            initializeDatepicker("#datePicker");
+
+            // 班データを取得し、選択肢を設定
+            $.ajax({
+                url: "{% url 'production:team_list' %}",
+                type: "GET",
+                success: function (data) {
+                    const teamSelect = $('#teamSelect');
+                    teamSelect.empty();
+                    teamSelect.append('<option value="" disabled selected>班を選択してください</option>');
+                    data.forEach(team => {
+                        teamSelect.append(`<option value="${team.id}">${team.name}</option>`);
+                    });
+
+                    // select2 の初期化
+                    teamSelect.select2({
+                        width: '100%',
+                        dropdownParent: $('#commonModal'),
+                    });
+                },
+                error: function () {
+                    toastr.error('班データの取得に失敗しました。');
+                }
+            });
+
+        }
+
+        // フォーム送信処理
+        $('#commonModalForm').on('submit', function (e) {
+            // ページ遷移しないためにデフォルトのsubmitの挙動を取り消す
+            e.preventDefault();
+
+            // バリデーションルール
+            const validationRules = [
+                { field: '#datePicker', feedbackSelector: '.invalid-feedback[for="datePicker"]', errorMessage: '-年-月-日の形式で正しい日付を入力してください。', type: 'date' },
+                { field: '#teamSelect', feedbackSelector: '.invalid-feedback[for="teamSelect"]', errorMessage: '班を選択してください。' },
+            ];
+
+            const isValid = validateFields(validationRules);
+
+            if (!isValid) {
+                return;
+            }
+
+            // 編集かどうかで送信先、メソッドの切り替え
+            const url = "{% url 'production:production_record_graph' %}";
+            const sendData = {
+                date: $('#datePicker').val(),
+                range: $('#rangeSelect').val(),
+                team_id: $('#teamSelect').val(),
+                shift: $('#shiftSelect').val(),
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            };
+
+        });
+    });
+</script>
+{% endblock %}

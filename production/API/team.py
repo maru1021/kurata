@@ -32,7 +32,6 @@ class TeamDetailView(View):
             return JsonResponse({
                 "success": False,
                 "error_field": "teamName",
-                "error_message_field": "teamNameFeedback",
                 "message": "その班はすでに登録されています。"
             })
 
@@ -59,7 +58,6 @@ class TeamDetailView(View):
                 return JsonResponse({
                     "success": False,
                     "error_field": "teamName",
-                    "error_message_field": "teamNameFeedback",
                     "message": "その班はすでに登録されています。"
                 })
 
